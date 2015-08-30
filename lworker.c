@@ -47,6 +47,7 @@ static worker* _match(const char *channel, worker **queue) {
             node->next->prev = node->prev;
             return node;
         }
+        node = node->next;
     } while (node != *queue);
 
     return NULL;
@@ -120,6 +121,7 @@ static int lrecv(lua_State *L) {
     if (p) {
         _move(p->L, L);
         p->channel = NULL;
+        pthread_cond_signal(&p->cond);
     } else {
         _wait(L, channel, &WRECV);
     }
@@ -145,7 +147,8 @@ static int lstart(lua_State *L) {
     if (pthread_create(&thread, NULL, _thread, L1) != 0)
         luaL_error(L, "unable to create new thread");
 
-    pthread_detach(thread);
+    //pthread_detach(thread);
+    pthread_join(thread, NULL);
 
     return 0;
 }
